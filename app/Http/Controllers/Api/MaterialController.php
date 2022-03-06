@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use Exception;
+use App\Models\Product;
 use App\Models\Material;
+use App\Models\Categories;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\MaterialResource;
 use App\Http\Resources\WrapperResource;
-use Exception;
+use App\Http\Resources\MaterialResource;
+use App\Http\Resources\ProductResource;
 
 class MaterialController extends Controller
 {
@@ -61,12 +64,19 @@ class MaterialController extends Controller
     public function show($material_id)
     {
         try {
-            $data["material"] = Material::find($material_id);
-            $data["categories"] = Material::find($material_id)->category;
-            return new WrapperResource($data);
+            // $data["material"] = Material::find($material_id);
+            $categories = Material::find($material_id)->category;
+
+            $id = [];
+            foreach ($categories as $category){
+                $id[] = $category->category_id;
+            }
+            $productList= Product::whereIn('category_id',$id)->get();
+            return ProductResource::collection($productList);
+
         } catch (Exception $e) {
             $message = "Material Id not found!";
-            return $message;
+            return $e;
         }
     }
 

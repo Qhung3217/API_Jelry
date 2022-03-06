@@ -21,4 +21,5 @@ class MaterialResource extends JsonResource
             'category' => $this->category
         ];
     }
+
 }
