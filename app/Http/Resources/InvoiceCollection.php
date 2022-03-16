@@ -25,4 +25,18 @@ class InvoiceCollection extends ResourceCollection
             "updated_at" => $this->updated_at,
         ];
     }
+
+    public static function setInvoiceRequest($request)
+    {
+        return [
+            'invoice_customer_name' => $request->customer_name,
+            'invoice_customer_email' => $request->customer_email,
+            'invoice_customer_tels' => $request->customer_tel,
+            'invoice_customer_province' => $request->customer_province,
+            'invoice_customer_district' => $request->customer_district,
+            'invoice_customer_ward' => $request->customer_ward,
+            'invoice_customer_address' => $request->customer_address,
+            'invoice_total' => $request->total
+        ];
+    }
 }

@@ -14,7 +14,11 @@ class Invoice extends Model
 
     protected $fillable = [
         'invoice_customer_name',
+        'invoice_customer_email',
         'invoice_customer_tels',
+        'invoice_customer_province',
+        'invoice_customer_district',
+        'invoice_customer_ward',
         'invoice_customer_address',
         'invoice_total',
     ];

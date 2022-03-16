@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Size;
 use App\Models\Invoice;
+use App\Models\Product;
+use App\Models\ProductSize;
 use Illuminate\Http\Request;
+use App\Models\InvoiceDetail;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\WrapperResource;
 use App\Http\Resources\InvoiceCollection;
@@ -39,16 +44,54 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
+        DB::beginTransaction();
         try{
             // $request->merge([
             //     'invoice_date' => now('Asia/Ho_Chi_Minh'),
             // ]);
-            Invoice::create($request->input());
-            $message = "Create successfully!!";
-        }catch(Exception $e){
-            $message = "Create failed. Try again!";
+            // Invoice::create($request->input());
+            $invoice = InvoiceCollection::setInvoiceRequest($request);
+            $invoiceAdd = Invoice::create($invoice);
+            $products = $request->input('products');
+            foreach ($products as $product){
+                // return $product;
+                $data = [
+                    "invoice_detail_size" => $product['size'],
+                    "invoice_detail_quantity" => $product['quantity'],
+                    "invoice_detail_price_sell" => $product['price'],
+                    "invoice_id" => $invoiceAdd->invoice_id,
+                    "product_id" => $product["id"],
+                ];
+                // return $data;
+                InvoiceDetail::create($data);
+
+                $size = Size::where('size_name',$product['size'])->first();
+                $productSize = ProductSize::where('product_id',$product['id'])->where('size_id',$size['size_id'])->first();
+                $newquantity = $productSize->quantity - $product['quantity'];
+                Product::find($product['id'])->size()->updateExistingPivot($size->size_id,[
+                    'product_size_quantily' => $newquantity
+                ]);
+            }
+            DB::commit();
+            return response()->json(
+                [
+                    'error' => false,
+                    'title' => 'Đặt hàng thành công',
+                    'message' => 'Cảm ơn bạn đã mua hàng'
+                ],
+                200
+            );
+        }catch(QueryException $e){
+            DB::rollBack();
+            return response()->json(
+                [
+                    'error' => true,
+                    'title' => 'Đặt hàng thất bại',
+                    'message' => 'Vui lòng thử lại'
+                ],
+                500
+            );
         }
-        return $message;
     }
 
     /**
