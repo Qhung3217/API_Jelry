@@ -68,9 +68,20 @@ class InvoiceController extends Controller
                 $size = Size::where('size_name',$product['size'])->first();
                 $productSize = ProductSize::where('product_id',$product['id'])->where('size_id',$size['size_id'])->first();
                 $newquantity = $productSize->quantity - $product['quantity'];
-                Product::find($product['id'])->size()->updateExistingPivot($size->size_id,[
-                    'product_size_quantily' => $newquantity
-                ]);
+                if ($newquantity >= 0)
+                    Product::find($product['id'])->size()->updateExistingPivot($size->size_id,[
+                        'product_size_quantily' => $newquantity
+                    ]);
+                else{
+                    DB::rollBack();
+                    return response()->json(
+                        [
+                            'error' => true,
+                            'title' => 'Đặt hàng thất bại',
+                            'message' => 'Vui lòng thử lại'
+                        ]
+                    );
+                }
             }
             DB::commit();
             return response()->json(
