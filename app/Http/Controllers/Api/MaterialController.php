@@ -43,16 +43,35 @@ class MaterialController extends Controller
      */
     public function store(Request $request)
     {
+
+        $this->validate(
+            $request,
+            [
+                'name' => 'unique:materials,material_name',
+            ],
+            [
+                'name.unique' => 'Material name is already exits'
+            ]
+        );
         try{
-            $request->merge([
-                'material_slug' => \Str::slug($request->input('material_name')),
+            $data = [
+                "material_name" => $request->input("name"),
+                'material_slug' => \Str::slug($request->input("name")),
+            ];
+
+
+            Material::create($data);
+            return response()->json([
+                'message' => "Create successfully!!",
+                'error' => false
             ]);
-            Material::create($request->input());
-            $message = "Create successfully!!";
         }catch(Exception $e){
             $message = "Create failed. Try again!";
+            return response()->json([
+                'message' => "Create failed. Try again!",
+                'error' => false
+            ]);
         }
-        return $message;
     }
 
     /**
@@ -61,18 +80,20 @@ class MaterialController extends Controller
      * @param  \App\Models\material  $material
      * @return \Illuminate\Http\Response
      */
+    /**
+     *   $categories = Material::find($material_id)->category;
+     *   $id = [];
+     *   foreach ($categories as $category){
+     *       $id[] = $category->category_id;
+     *   }
+     *   $productList= Product::whereIn('category_id',$id)->get();
+     *   return ProductResource::collection($productList);
+     */
     public function show($material_id)
     {
         try {
-            // $data["material"] = Material::find($material_id);
-            $categories = Material::find($material_id)->category;
-
-            $id = [];
-            foreach ($categories as $category){
-                $id[] = $category->category_id;
-            }
-            $productList= Product::whereIn('category_id',$id)->get();
-            return ProductResource::collection($productList);
+            $data = Material::findOrFail($material_id);
+            return $data;
 
         } catch (Exception $e) {
             $message = "Material Id not found!";
@@ -100,17 +121,31 @@ class MaterialController extends Controller
      */
     public function update(Request $request, Material $material)
     {
+        $this->validate(
+            $request,
+            [
+                'name' => 'unique:materials,material_name',
+            ],
+            [
+                'name.unique' => 'Material name is already exits'
+            ]
+        );
         try {
-            if ($request->input('material_name'))
-                $request->merge([
-                    'material_slug' => \Str::slug($request->input('material_name')),
-                ]);
-            $material->update($request->all());
-            $message = "Update material recored succesfully";
-            return $message;
+            $data = [
+                'material_name' => $request->input('name'),
+                'material_slug' => \Str::slug($request->input('name'))
+            ];
+
+            $material->update($data);
+            return response()->json([
+                'message' => "Update material recored succesfully",
+                'error' => false
+            ]);
         } catch (Exception $e) {
-            $message = "Update material recored failed";
-            return $message;
+            return response()->json([
+                'message' => "Update material recored failed",
+                'error' => true
+            ]);
         }
     }
 
@@ -125,10 +160,11 @@ class MaterialController extends Controller
         try {
             $material->delete();
             $message = "Delete successfully!";
-            return $message;
+
         } catch (Exception $e) {
             $message = "Delete failed!";
-            return $message;
+
         }
+        return response()->json($message);
     }
 }

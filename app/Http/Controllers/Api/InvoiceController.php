@@ -23,7 +23,8 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        return new WrapperResource(Invoice::paginate(10));
+        // return new WrapperResource(Invoice::paginate(10));
+        return Invoice::all();
     }
 
     /**
@@ -67,11 +68,14 @@ class InvoiceController extends Controller
 
                 $size = Size::where('size_name',$product['size'])->first();
                 $productSize = ProductSize::where('product_id',$product['id'])->where('size_id',$size['size_id'])->first();
-                $newquantity = $productSize->quantity - $product['quantity'];
-                if ($newquantity >= 0)
+                $newquantity = $productSize["product_size_quantily"] - $product['quantity'];
+                // return $newquantity;
+                if ($newquantity >= 0){
                     Product::find($product['id'])->size()->updateExistingPivot($size->size_id,[
                         'product_size_quantily' => $newquantity
                     ]);
+
+                }
                 else{
                     DB::rollBack();
                     return response()->json(
@@ -82,7 +86,9 @@ class InvoiceController extends Controller
                         ]
                     );
                 }
+
             }
+
             DB::commit();
             return response()->json(
                 [
