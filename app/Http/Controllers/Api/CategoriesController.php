@@ -6,6 +6,7 @@ use App\Models\Categories;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\WrapperResource;
+use App\Models\material;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CategoriesController extends Controller
@@ -38,16 +39,35 @@ class CategoriesController extends Controller
      */
     public function store(Request $request)
     {
+        $this->validate(
+            $request,
+            [
+                'name' => 'unique:categories,category_name',
+            ],
+            [
+                'name.unique' => 'Category name is already exits'
+            ]
+        );
         try{
-            $request->merge([
-                'category_slug' => \Str::slug($request->input('category_name')),
+            $data = [
+                "category_name" => $request->input("name"),
+                "material_id" => $request->input("parentId"),
+                'category_slug' => \Str::slug($request->input("name")),
+            ];
+            // $request->merge([
+            //     'category_slug' => \Str::slug($request->input('category_name')),
+            // ]);
+            Categories::create($data);
+            return response()->json([
+                'message' => "Create successfully!!",
+                'error' => false
             ]);
-            Categories::create($request->input());
-            $message = "Create successfully!!";
         }catch(Exception $e){
-            $message = "Create failed. Try again!";
+            return response()->json([
+                'message' => "Create failed. Try again!",
+                'error' => true
+            ]);
         }
-        return $message;
     }
 
     /**
@@ -59,9 +79,9 @@ class CategoriesController extends Controller
     public function show($category_id)
     {
         try {
-            $data["categories"] = Categories::findOrFail($category_id);
-            $data["products"] = Categories::findOrFail($category_id)->product;
-            return new WrapperResource($data);
+            $data['category'] = Categories::findOrFail($category_id);
+            $data['material'] = Material::findOrFail($category_id);
+            return $data;
         } catch (ModelNotFoundException $e) {
             $message = "Category Id not found!";
             return $message;
@@ -88,17 +108,40 @@ class CategoriesController extends Controller
      */
     public function update(Request $request, Categories $category)
     {
+        // $this->validate(
+        //     $request,
+        //     [
+        //         'name' => 'unique:categories,category_name',
+        //     ],
+        //     [
+        //         'name.unique' => 'Category name is already exits'
+        //     ]
+        // );
+
         try {
-            if ($request->input('category_name'))
-                $request->merge([
-                    'category_slug' => \Str::slug($request->input('category_name')),
+            $data = [
+                "category_name" => $request->input("name"),
+                "material_id" => $request->input("parentId"),
+                'category_slug' => \Str::slug($request->input("name")),
+            ];
+            $isExist = Categories::where('category_id',$category->category_id)->where('material_id',$data['material_id'])->get();
+            // return $isExist->count();
+            if ($isExist->count() !== 0){
+                return response()->json([
+                    'message' => "Category name is already exits",
+                    'error' => true
                 ]);
-            $category->update($request->all());
-            $message = "Update category recored succesfully";
-            return $message;
+            }
+            $category->update($data);
+            return response()->json([
+                'message' => "Update category recored succesfully",
+                'error' => false
+            ]);
         } catch (Exception $e) {
-            $message = "Update category recored failed";
-            return $message;
+            return response()->json([
+                'message' => "Update category recored failed",
+                'error' => true
+            ]);
         }
     }
 
@@ -112,11 +155,15 @@ class CategoriesController extends Controller
     {
         try {
             $category->delete();
-            $message = "Delete successfully!";
-            return $message;
+            return response()->json([
+                'message' => "Delete successfully!",
+                'error' => false
+            ]);
         } catch (Exception $e) {
-            $message = "Delete failed!";
-            return $message;
+            return response()->json([
+                'message' => "Delete failed! Try again",
+                'error' => true
+            ]);
         }
     }
 }

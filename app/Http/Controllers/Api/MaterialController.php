@@ -66,10 +66,9 @@ class MaterialController extends Controller
                 'error' => false
             ]);
         }catch(Exception $e){
-            $message = "Create failed. Try again!";
             return response()->json([
                 'message' => "Create failed. Try again!",
-                'error' => false
+                'error' => true
             ]);
         }
     }
@@ -97,7 +96,7 @@ class MaterialController extends Controller
 
         } catch (Exception $e) {
             $message = "Material Id not found!";
-            return $e;
+            return $message;
         }
     }
 
@@ -159,12 +158,15 @@ class MaterialController extends Controller
     {
         try {
             $material->delete();
-            $message = "Delete successfully!";
-
+            return response()->json([
+                'message' => "Delete successfully!",
+                'error' => false
+            ]);
         } catch (Exception $e) {
-            $message = "Delete failed!";
-
+            return response()->json([
+                'message' => "Delete failed! Try again",
+                'error' => true
+            ]);
         }
-        return response()->json($message);
     }
 }
