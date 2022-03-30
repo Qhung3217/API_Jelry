@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Product;
+use App\Models\ProductSize;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\WrapperResource;
-use App\Models\ProductSize;
+use App\Models\Image;
 
 class ProductController extends Controller
 {
@@ -39,16 +41,60 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        $this->validate(
+            $request,
+            [
+                'name' => 'unique:products,product_name',
+            ],
+            [
+                'name.unique' => 'Product name is already exits'
+            ]
+        );
+        DB::beginTransaction();
         try{
-            $request->merge([
-                'product_slug' => \Str::slug($request->input('product_name')),
+            $product = [
+                "product_name" => $request->input("name"),
+                "product_slug" => \Str::slug($request->input("name")),
+                "product_price" => $request->input("price"),
+                "product_desc" => $request->input("desc"),
+                "category_id" => $request->input("cate")
+            ];
+            $product = Product::create($product);
+            $images = $request->image;
+            foreach ($images as $image){
+                $path = 'uploads/'. date('Y-m-d');
+                $name = time().rand(1,100).'.'.$image->extension();
+                $image->move(public_path($path), $name);
+                $pathFull = $path . '/' . $name;
+                $data = [
+                    'product_id' => $product->product_id,
+                    'image_url' => $pathFull
+                ];
+                Image::create($data);
+            }
+            $sizes = $request->size;
+            $quantities = $request->quantity;
+            // return response()->json($sizes);
+            for($i = 0 ; $i < count($sizes) ; $i++) {
+                $data = [
+                    'product_id' => $product->product_id,
+                    'size_id' => $sizes[$i],
+                    'product_size_quantily' => $quantities[$i]
+                ];
+                ProductSize::create($data);
+            }
+            DB::commit();
+            return response()->json([
+                'message' => "Create successfully!!",
+                'error' => false
             ]);
-            Product::create($request->input());
-            $message = "Create successfully!!";
-        }catch(Exception $e){
-            $message = "Create failed. Try again!";
+        }catch(QueryException $e){
+            DB::rollback();
+            return response()->json([
+                'message' => "Create failed. Try again!",
+                'error' => true
+            ]);
         }
-        return $message;
     }
 
     /**

@@ -14,6 +14,8 @@ class ProductSize extends Model
     protected $primaryKey = ['size_id', 'product_id'];
 
     protected $fillable = [
+        'size_id',
+        'product_id',
         'product_size_quantily',
     ];
 
