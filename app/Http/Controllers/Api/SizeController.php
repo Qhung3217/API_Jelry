@@ -16,7 +16,7 @@ class SizeController extends Controller
      */
     public function index()
     {
-        return new WrapperResource(Size::paginate(10));
+        return new WrapperResource(Size::all());
     }
 
     /**
@@ -37,13 +37,22 @@ class SizeController extends Controller
      */
     public function store(Request $request)
     {
+
         try{
-            Size::create($request->input());
-            $message = "Create successfully!!";
+            $data = [
+                "size_name" => $request->input("name"),
+            ];
+            Size::create($data);
+            return response()->json([
+                'message' => "Create successfully!!",
+                'error' => false
+            ]);
         }catch(Exception $e){
-            $message = "Create failed. Try again!";
+            return response()->json([
+                'message' => "Create failed. Try again!",
+                'error' => true
+            ]);
         }
-        return $message;
     }
 
     /**
@@ -52,9 +61,18 @@ class SizeController extends Controller
      * @param  \App\Models\Size  $size
      * @return \Illuminate\Http\Response
      */
-    public function show(Size $size)
+    public function show($size)
     {
-        //
+        try {
+            $data = Size::findOrFail($size);
+            return $data;
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => "Material Id not found!",
+                'error' => false
+            ]);
+        }
     }
 
     /**
@@ -77,13 +95,21 @@ class SizeController extends Controller
      */
     public function update(Request $request, Size $size)
     {
+
         try {
-            $size->update($request->all());
-            $message = "Update size recored succesfully";
-            return $message;
+            $data = [
+                'size_name' => $request->input('name'),
+            ];
+            $size->update($data);
+            return response()->json([
+                'message' => "Update size recored succesfully",
+                'error' => false
+            ]);
         } catch (ModelNotFoundException $e) {
-            $message = "Update size recored failed";
-            return $message;
+            return response()->json([
+                'message' => "Update size recored failed",
+                'error' => true
+            ]);
         }
     }
 
@@ -97,11 +123,15 @@ class SizeController extends Controller
     {
         try {
             $size->delete();
-            $message = "Delete successfully!";
-            return $message;
+            return response()->json([
+                'message' => "Delete successfully!",
+                'error' => false
+            ]);
         } catch (Exception $e) {
-            $message = "Delete failed!";
-            return $message;
+            return response()->json([
+                'message' => "Delete failed! Try again",
+                'error' => true
+            ]);
         }
     }
 }

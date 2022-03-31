@@ -26,6 +26,6 @@ Route::resource('category', 'App\Http\Controllers\Api\CategoriesController')->ex
 Route::resource('invoice-detail', 'App\Http\Controllers\Api\InvoiceDetailController')->only(['update','store']);
 Route::resource('invoice', 'App\Http\Controllers\Api\InvoiceController')->except(['edit','create']);
 Route::resource('product', 'App\Http\Controllers\Api\ProductController')->except(['edit','create']);
-Route::resource('size', 'App\Http\Controllers\Api\SizeController')->only(['index','store','update','destroy']);
+Route::resource('size', 'App\Http\Controllers\Api\SizeController')->only(['index','show','store','update','destroy']);
 Route::resource('product-size', 'App\Http\Controllers\Api\ProductSizeController')->only(['store','update','destroy']);
 Route::resource('image', 'App\Http\Controllers\Api\ImageController')->except(['edit','create']);

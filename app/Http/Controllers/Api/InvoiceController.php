@@ -23,7 +23,6 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        // return new WrapperResource(Invoice::paginate(10));
         return Invoice::all();
     }
 
@@ -170,11 +169,15 @@ class InvoiceController extends Controller
     {
         try {
             $invoice->delete();
-            $message = "Delete successfully!";
-            return $message;
+            return response()->json([
+                'message' => "Delete successfully!",
+                'error' => false
+            ]);
         } catch (Exception $e) {
-            $message = "Delete failed!";
-            return $message;
+            return response()->json([
+                'message' => "Delete failed! Try again",
+                'error' => false
+            ]);
         }
     }
 }

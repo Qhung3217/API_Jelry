@@ -8,8 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
-use App\Http\Resources\WrapperResource;
+use File;
 use App\Models\Image;
+use Exception;
 
 class ProductController extends Controller
 {
@@ -20,7 +21,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $data = Product::paginate(10);
+        $data = Product::all();
         return ProductResource::collection($data);
     }
     /**
@@ -137,17 +138,61 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        DB::beginTransaction();
         try {
-            if ($request->input('product_name'))
-                $request->merge([
-                    'product_slug' => \Str::slug($request->input('product_name')),
-                ]);
-            $product->update($request->all());
-            $message = "Update product recored succesfully";
-            return $message;
-        } catch (ModelNotFoundException $e) {
-            $message = "Update product recored failed";
-            return $message;
+
+            $data = [
+                "product_name" => $request->input("name"),
+                "product_slug" => \Str::slug($request->input("name")),
+                "product_price" => $request->input("price"),
+                "product_desc" => $request->input("desc"),
+                "category_id" => $request->input("cate")
+            ];
+
+            $product->update($data);
+            if ($request->image){
+                $images = Image::where("product_id", $product->product_id)->get();
+                foreach ($images as $image){
+                    if (File::exists(public_path($image['image_url'])))
+                        File::delete(public_path($image['image_url']));
+                }
+                Image::where("product_id",$product->product_id)->delete();
+                $images = $request->image;
+                foreach ($images as $image){
+                    $path = 'uploads/'. date('Y-m-d');
+                    $name = time().rand(1,100).'.'.$image->extension();
+                    $image->move(public_path($path), $name);
+                    $pathFull = $path . '/' . $name;
+                    $data = [
+                        'product_id' => $product->product_id,
+                        'image_url' => $pathFull
+                    ];
+                    Image::create($data);
+                }
+            }
+            ProductSize::where('product_id', $product->product_id)->delete();
+            $sizes = $request->size;
+            $quantities = $request->quantity;
+            for($i = 0 ; $i < count($sizes) ; $i++) {
+                $data = [
+                    'product_id' => $product->product_id,
+                    'size_id' => $sizes[$i],
+                    'product_size_quantily' => $quantities[$i]
+                ];
+                ProductSize::create($data);
+            }
+            DB::commit();
+            return response()->json([
+                'message' => "Update product recored succesfully",
+                'error' => false
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => "Update product recored failed",
+                'error' => true,
+                'ss' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -161,11 +206,15 @@ class ProductController extends Controller
     {
         try {
             $product->delete();
-            $message = "Delete successfully!";
-            return $message;
+            return response()->json([
+                'message' => "Delete successfully!",
+                'error' => false
+            ]);
         } catch (Exception $e) {
-            $message = "Delete failed!";
-            return $message;
+            return response()->json([
+                'message' => "Delete failed! Try again",
+                'error' => true
+            ]);
         }
     }
 }
