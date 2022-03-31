@@ -29,3 +29,5 @@ Route::resource('product', 'App\Http\Controllers\Api\ProductController')->except
 Route::resource('size', 'App\Http\Controllers\Api\SizeController')->only(['index','show','store','update','destroy']);
 Route::resource('product-size', 'App\Http\Controllers\Api\ProductSizeController')->only(['store','update','destroy']);
 Route::resource('image', 'App\Http\Controllers\Api\ImageController')->except(['edit','create']);
+
+route::get('income', 'App\Http\Controllers\Api\InvoiceController@income');

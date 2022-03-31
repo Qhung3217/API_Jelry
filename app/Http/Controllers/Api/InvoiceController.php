@@ -31,9 +31,16 @@ class InvoiceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function income()
     {
-
+        $data = [];
+        foreach (Invoice::all() as $invoice){
+            $data[] = [
+                'invoice_total' => $invoice->invoice_total,
+                'time_order' => $invoice->created_at
+            ];
+        }
+        return $data;
     }
 
     /**
