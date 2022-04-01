@@ -31,3 +31,5 @@ Route::resource('product-size', 'App\Http\Controllers\Api\ProductSizeController'
 Route::resource('image', 'App\Http\Controllers\Api\ImageController')->except(['edit','create']);
 
 route::get('income', 'App\Http\Controllers\Api\InvoiceController@income');
+route::post('login', 'App\Http\Controllers\Api\AdminController@login');
+route::post('change-password', 'App\Http\Controllers\Api\AdminController@changePassword');
