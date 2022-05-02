@@ -24,15 +24,6 @@ class ProductController extends Controller
         $data = Product::all();
         return ProductResource::collection($data);
     }
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -88,45 +79,14 @@ class ProductController extends Controller
             return response()->json([
                 'message' => "Create successfully!!",
                 'error' => false
-            ]);
+            ],200);
         }catch(QueryException $e){
             DB::rollback();
             return response()->json([
                 'message' => "Create failed. Try again!",
                 'error' => true
-            ]);
+            ],500);
         }
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function show($product_id)
-    {
-        try {
-            $data = Product::findOrFail($product_id);
-            $data->size;
-            $data->image;
-            return $data;
-            // return ProductResource::collection($data);
-        } catch (ModelNotFoundException $e) {
-            $message = "Product Id not found!";
-            return $message;
-        }
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Product $product)
-    {
-        //
     }
 
     /**
@@ -136,9 +96,8 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Product $product)
+    public function update(Request $request, $product_id)
     {
-        DB::beginTransaction();
         try {
 
             $data = [
@@ -148,7 +107,26 @@ class ProductController extends Controller
                 "product_desc" => $request->input("desc"),
                 "category_id" => $request->input("cate")
             ];
+            $product = Product::find($product_id);
+            if (is_null($product)){
+                return response()->json([
+                    'message' => "Product is not exist",
+                    'error' => true
+                ],400);
+            }
+            if ($product->product_slug !== $data['product_slug']) {
+                $this->validate(
+                    $request,
+                    [
+                        'name' => 'unique:categories,category_name',
+                    ],
+                    [
+                        'name.unique' => 'Category name is already exits'
+                    ]
+                );
+            }
 
+            DB::beginTransaction();
             $product->update($data);
             if ($request->image){
                 $images = Image::where("product_id", $product->product_id)->get();
@@ -185,14 +163,14 @@ class ProductController extends Controller
             return response()->json([
                 'message' => "Update product recored succesfully",
                 'error' => false
-            ]);
+            ],200);
         } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'message' => "Update product recored failed",
                 'error' => true,
                 'ss' => $e->getMessage(),
-            ]);
+            ],500);
         }
     }
 
@@ -202,19 +180,26 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Product $product)
+    public function destroy($product_id)
     {
         try {
+            $product = Product::find($product_id);
+            if (is_null($product)){
+                return response()->json([
+                    'message' => "Product is not exist",
+                    'error' => true
+                ],400);
+            }
             $product->delete();
             return response()->json([
                 'message' => "Delete successfully!",
                 'error' => false
-            ]);
+            ],200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => "Delete failed! Try again",
                 'error' => true
-            ]);
+            ],500);
         }
     }
 }

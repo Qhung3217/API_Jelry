@@ -21,15 +21,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('', function(){
     return view('Welcome');
 });
-Route::resource('material', 'App\Http\Controllers\Api\MaterialController')->except(['edit','create']);
-Route::resource('category', 'App\Http\Controllers\Api\CategoriesController')->except(['edit','create']);
-Route::resource('invoice-detail', 'App\Http\Controllers\Api\InvoiceDetailController')->only(['update','store']);
-Route::resource('invoice', 'App\Http\Controllers\Api\InvoiceController')->except(['edit','create']);
-Route::resource('product', 'App\Http\Controllers\Api\ProductController')->except(['edit','create']);
-Route::resource('size', 'App\Http\Controllers\Api\SizeController')->only(['index','show','store','update','destroy']);
-Route::resource('product-size', 'App\Http\Controllers\Api\ProductSizeController')->only(['store','update','destroy']);
-Route::resource('image', 'App\Http\Controllers\Api\ImageController')->except(['edit','create']);
+Route::resource('material', 'App\Http\Controllers\Api\MaterialController')->only(['index','store','update','destroy']);
+Route::resource('category', 'App\Http\Controllers\Api\CategoriesController')->only(['index','store','update','destroy']);
+Route::resource('invoice', 'App\Http\Controllers\Api\InvoiceController')->only(['index','store','destroy']);
+Route::resource('product', 'App\Http\Controllers\Api\ProductController')->only(['index','store','update','destroy']);
+Route::resource('size', 'App\Http\Controllers\Api\SizeController')->only(['index','store','update','destroy']);
 
 route::get('income', 'App\Http\Controllers\Api\InvoiceController@income');
 route::post('login', 'App\Http\Controllers\Api\AdminController@login');
 route::post('change-password', 'App\Http\Controllers\Api\AdminController@changePassword');
+
+// Route::resource('invoice-detail', 'App\Http\Controllers\Api\InvoiceDetailController')->only(['update','store']);
+// Route::resource('product-size', 'App\Http\Controllers\Api\ProductSizeController')->only(['store','update','destroy']);
+// Route::resource('image', 'App\Http\Controllers\Api\ImageController')->except(['edit','create']);

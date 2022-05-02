@@ -48,20 +48,20 @@ class InvoiceController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
+     *  $request->merge([
+     *       'invoice_date' => now('Asia/Ho_Chi_Minh'),
+     *  ]);
+     *  Invoice::create($request->input());
      */
     public function store(Request $request)
     {
         DB::beginTransaction();
         try{
-            // $request->merge([
-            //     'invoice_date' => now('Asia/Ho_Chi_Minh'),
-            // ]);
-            // Invoice::create($request->input());
+
             $invoice = InvoiceCollection::setInvoiceRequest($request);
             $invoiceAdd = Invoice::create($invoice);
             $products = $request->input('products');
             foreach ($products as $product){
-                // return $product;
                 $data = [
                     "invoice_detail_size" => $product['size'],
                     "invoice_detail_quantity" => $product['quantity'],
@@ -69,18 +69,16 @@ class InvoiceController extends Controller
                     "invoice_id" => $invoiceAdd->invoice_id,
                     "product_id" => $product["id"],
                 ];
-                // return $data;
                 InvoiceDetail::create($data);
 
                 $size = Size::where('size_name',$product['size'])->first();
-                $productSize = ProductSize::where('product_id',$product['id'])->where('size_id',$size['size_id'])->first();
+                $productSize = ProductSize::where('product_id',$product['id'])
+                                        ->where('size_id',$size['size_id'])->first();
                 $newquantity = $productSize["product_size_quantily"] - $product['quantity'];
-                // return $newquantity;
                 if ($newquantity >= 0){
                     Product::find($product['id'])->size()->updateExistingPivot($size->size_id,[
                         'product_size_quantily' => $newquantity
                     ]);
-
                 }
                 else{
                     DB::rollBack();
@@ -89,10 +87,10 @@ class InvoiceController extends Controller
                             'error' => true,
                             'title' => 'Đặt hàng thất bại',
                             'message' => 'Vui lòng thử lại'
-                        ]
+                        ],
+                        200
                     );
                 }
-
             }
 
             DB::commit();
@@ -117,54 +115,6 @@ class InvoiceController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Invoice  $invoice
-     * @return \Illuminate\Http\Response
-     */
-    public function show($invoice_id)
-    {
-        // return $invoice;
-        try {
-            $data['data'] = [Invoice::findOrFail($invoice_id),Invoice::findOrFail($invoice_id)->invoiceDetail];
-            return $data;
-            // return Invoice::findOrFail($invoice_id);
-        } catch (ModelNotFoundException $e) {
-            $message = "Invoice Id not found!";
-            return $message;
-        }
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Invoice  $invoice
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Invoice $invoice)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Invoice  $invoice
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Invoice $invoice)
-    {
-        try {
-            $invoice->update($request->all());
-            $message = "Update invoice recored succesfully";
-            return $message;
-        } catch (ModelNotFoundException $e) {
-            $message = "Update invoice recored failed";
-            return $message;
-        }
-    }
 
     /**
      * Remove the specified resource from storage.
@@ -172,19 +122,27 @@ class InvoiceController extends Controller
      * @param  \App\Models\Invoice  $invoice
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Invoice $invoice)
+    public function destroy($invoice_id)
     {
         try {
-            $invoice->delete();
-            return response()->json([
-                'message' => "Delete successfully!",
-                'error' => false
-            ]);
+            $invoice = Invoice::find($invoice_id);
+            if (!is_null($invoice)){
+                $invoice->delete();
+                return response()->json([
+                    'message' => "Delete successfully!",
+                    'error' => false
+                ], 200);
+            }
+            else
+                return response()->json([
+                    'message' => "Delete failed! Invoice not found!",
+                    'error' => true
+                ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => "Delete failed! Try again",
-                'error' => false
-            ]);
+                'error' => true
+            ],500);
         }
     }
 }

@@ -6,8 +6,6 @@ use App\Models\Categories;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\WrapperResource;
-use App\Models\material;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CategoriesController extends Controller
 {
@@ -19,16 +17,6 @@ class CategoriesController extends Controller
     public function index()
     {
         return new WrapperResource(Categories::all());
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -71,52 +59,14 @@ class CategoriesController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\categories  $categories
-     * @return \Illuminate\Http\Response
-     */
-    public function show($category_id)
-    {
-        try {
-            $data['category'] = Categories::findOrFail($category_id);
-            $data['material'] = Material::findOrFail($category_id);
-            return $data;
-        } catch (ModelNotFoundException $e) {
-            $message = "Category Id not found!";
-            return $message;
-        }
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\categories  $categories
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(categories $categories)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\categories  $categories
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Categories $category)
+    public function update(Request $request, $category_id)
     {
-        // $this->validate(
-        //     $request,
-        //     [
-        //         'name' => 'unique:categories,category_name',
-        //     ],
-        //     [
-        //         'name.unique' => 'Category name is already exits'
-        //     ]
-        // );
 
         try {
             $data = [
@@ -124,13 +74,23 @@ class CategoriesController extends Controller
                 "material_id" => $request->input("parentId"),
                 'category_slug' => \Str::slug($request->input("name")),
             ];
-            $isExist = Categories::where('category_id',$category->category_id)->where('material_id',$data['material_id'])->get();
-            // return $isExist->count();
-            if ($isExist->count() !== 0){
+            $category = Categories::find($category_id);
+            if (is_null($category)) {
                 return response()->json([
-                    'message' => "Category name is already exits",
+                    'message' => "Category is not exist",
                     'error' => true
-                ]);
+                ],400);
+            }
+            if ($category->category_slug !== $data['category_slug']) {
+                $this->validate(
+                    $request,
+                    [
+                        'name' => 'unique:categories,category_name',
+                    ],
+                    [
+                        'name.unique' => 'Category name is already exits'
+                    ]
+                );
             }
             $category->update($data);
             return response()->json([
@@ -151,19 +111,26 @@ class CategoriesController extends Controller
      * @param  \App\Models\categories  $categories
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Categories $category)
+    public function destroy($category_id)
     {
         try {
+            $category = Categories::find($category_id);
+            if (is_null($category)) {
+                return response()->json([
+                    'message' => "Category is not exist",
+                    'error' => true
+                ], 400);
+            }
             $category->delete();
             return response()->json([
                 'message' => "Delete successfully!",
                 'error' => false
-            ]);
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => "Delete failed! Try again",
                 'error' => true
-            ]);
+            ], 500);
         }
     }
 }

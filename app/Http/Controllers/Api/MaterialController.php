@@ -3,14 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use Exception;
-use App\Models\Product;
 use App\Models\Material;
-use App\Models\Categories;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\WrapperResource;
 use App\Http\Resources\MaterialResource;
-use App\Http\Resources\ProductResource;
 
 class MaterialController extends Controller
 {
@@ -25,15 +21,6 @@ class MaterialController extends Controller
         return MaterialResource::collection(Material::all());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -100,16 +87,7 @@ class MaterialController extends Controller
         }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\material  $material
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(material $material)
-    {
-        //
-    }
+
 
     /**
      * Update the specified resource in storage.
@@ -118,7 +96,7 @@ class MaterialController extends Controller
      * @param  \App\Models\material  $material
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Material $material)
+    public function update(Request $request, $material_id)
     {
         $this->validate(
             $request,
@@ -134,7 +112,13 @@ class MaterialController extends Controller
                 'material_name' => $request->input('name'),
                 'material_slug' => \Str::slug($request->input('name'))
             ];
-
+            $material = Material::find($material_id);
+            if (is_null($material)) {
+                return response()->json([
+                    'message' => "Material is not exist",
+                    'error' => true
+                ],400);
+            }
             $material->update($data);
             return response()->json([
                 'message' => "Update material recored succesfully",
@@ -154,9 +138,16 @@ class MaterialController extends Controller
      * @param  \App\Models\material  $material
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Material $material)
+    public function destroy($material_id)
     {
         try {
+            $material = Material::find($material_id);
+            if (is_null($material)) {
+                return response()->json([
+                    'message' => "Category is not exist",
+                    'error' => true
+                ],400);
+            }
             $material->delete();
             return response()->json([
                 'message' => "Delete successfully!",
