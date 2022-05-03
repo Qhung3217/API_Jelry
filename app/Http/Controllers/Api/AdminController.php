@@ -30,25 +30,40 @@ class AdminController extends Controller
         $this->validate(
             $request,
             [
+                'oldPass' => 'required',
                 'newPass' => 'required',
             ],
             [
+                'oldPass.required' => 'Current password is required',
                 'newPass.required' => 'New password is required'
             ]
         );
         try {
-            $admin = Admin::where('username', 'admin')->first();
-            $admin->password = bcrypt($request->newPass);
-            $admin->save();
-            return response()->json([
-                'message' => "Change password succesfully",
-                'error' => false
-            ]);
+            $credentials = [
+                'username' => 'admin',
+                'password' => $request->oldPass
+            ];
+            if (Auth::guard('admin')->attempt($credentials)){
+                $admin = Admin::where('username', 'admin')->first();
+
+                $admin->password = bcrypt($request->newPass);
+                $admin->save();
+                return response()->json([
+                    'message' => "Change password succesfully",
+                    'error' => false
+                ],200);
+            }
+            else
+                return response()->json([
+                    'message' => "Current password is incorrect",
+                    'error' => true
+                ],400);
+
         } catch (\Throwable $th) {
             return response()->json([
                 'message' => "Change password failed. Try again! " . $th->getMessage(),
                 'error' => true
-            ]);
+            ],500);
         }
     }
 }
