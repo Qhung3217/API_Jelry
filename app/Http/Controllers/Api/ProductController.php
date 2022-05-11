@@ -24,7 +24,26 @@ class ProductController extends Controller
         $data = Product::all();
         return ProductResource::collection($data);
     }
-
+    public function show($product_id)
+    {
+        try {
+            $data = Product::find($product_id);
+            if (is_null($data))
+                return response()->json([
+                    'message' => 'Product id not found!',
+                    'error' => true
+                ],400);
+            $data->size;
+            $data->image;
+            return $data;
+            // return ProductResource::collection($data);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => true
+            ],500);
+        }
+    }
     /**
      * Store a newly created resource in storage.
      *

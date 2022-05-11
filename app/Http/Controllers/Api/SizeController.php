@@ -62,14 +62,20 @@ class SizeController extends Controller
     public function show($size)
     {
         try {
-            $data = Size::findOrFail($size);
+            $data = Size::find($size);
+            if (is_null($data)) {
+                return response()->json([
+                    'message' => 'Size not found!',
+                    'error' => true
+                ],400);
+            }
             return $data;
 
         } catch (Exception $e) {
             return response()->json([
-                'message' => "Material Id not found!",
-                'error' => false
-            ]);
+                'message' => $e->getMessage(),
+                'error' => true
+            ],500);
         }
     }
 

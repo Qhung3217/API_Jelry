@@ -23,7 +23,7 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        return Invoice::all();
+        return Invoice::orderBy('invoice_id','desc')->get();
     }
 
     /**

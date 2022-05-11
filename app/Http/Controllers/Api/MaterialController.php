@@ -79,11 +79,19 @@ class MaterialController extends Controller
     {
         try {
             $data = Material::findOrFail($material_id);
+            if (is_null($data)){
+                return response()->json([
+                    'message' => 'Material not found!',
+                    'error' => true
+                ],400);
+            }
             return $data;
 
         } catch (Exception $e) {
-            $message = "Material Id not found!";
-            return $message;
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => true
+            ],500);
         }
     }
 

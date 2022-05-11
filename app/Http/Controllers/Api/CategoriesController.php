@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use Exception;
+use App\Models\Material;
 use App\Models\Categories;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -19,6 +21,24 @@ class CategoriesController extends Controller
         return new WrapperResource(Categories::all());
     }
 
+    public function show($category_id)
+    {
+        try {
+            $data['category'] = Categories::find($category_id);
+            $data['material'] = Material::find($category_id);
+            if (is_null($data['category']) || is_null($data['material'])) {}
+                return response()->json([
+                    'message' => 'Record not found!',
+                    'error' => true
+                ],400);
+            return $data;
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => true
+            ],500);
+        }
+    }
     /**
      * Store a newly created resource in storage.
      *
